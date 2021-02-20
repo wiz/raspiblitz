@@ -115,16 +115,18 @@ if [ "$1" = "1" ] || [ "$1" = "on" ]; then
     # add mempool user
     sudo adduser --disabled-password --gecos "" mempool
 
-    # install mempool
-    cd /home/mempool
-    sudo -u mempool git clone https://github.com/mempool/mempool.git
-    cd mempool
+    # clone mempool repo
+    sudo mkdir -p /mnt/hdd/app-data/mempool
+    sudo chown mempool:mempool /mnt/hdd/app-data/mempool
+    sudo -u mempool git clone https://github.com/mempool/mempool /mnt/hdd/app-data/mempool
+
+    # change cwd to homedir
+    cd /mnt/hdd/app-data/mempool
+
+    # checkout tag
     sudo -u mempool git reset --hard $pinnedVersion
 
-    # modify an
-    #echo "# try to suppress question on statistics report .."
-    #sudo sed -i "s/^}/,\"cli\": {\"analytics\": false}}/g" /home/mempool/mempool/frontend/angular.json
-
+    # install database
     sudo mariadb -e "DROP DATABASE mempool;"
     sudo mariadb -e "CREATE DATABASE mempool;"
     sudo mariadb -e "GRANT ALL PRIVILEGES ON mempool.* TO 'mempool' IDENTIFIED BY 'mempool';"
@@ -200,9 +202,9 @@ if [ "$1" = "1" ] || [ "$1" = "on" ]; then
   }
 }
 EOF
-    sudo mv /home/admin/mempool-config.json /home/mempool/mempool/backend/mempool-config.json
-    sudo chown mempool:mempool /home/mempool/mempool/backend/mempool-config.json
-    cd /home/mempool/mempool/frontend
+    sudo mv /home/admin/mempool-config.json /mnt/hdd/app-data/mempool/backend/mempool-config.json
+    sudo chown mempool:mempool /mnt/hdd/app-data/mempool/backend/mempool-config.json
+    cd /mnt/hdd/app-data/mempool/frontend
 
     sudo mkdir -p /var/www/mempool
     sudo rsync -av --delete dist/mempool/ /var/www/mempool/
@@ -241,7 +243,7 @@ Wants=${network}d.service
 After=${network}d.service
 
 [Service]
-WorkingDirectory=/home/mempool/mempool/backend
+WorkingDirectory=/mnt/hdd/app-data/mempool/backend
 # ExecStartPre=/usr/bin/npm run build 
 ExecStart=/usr/bin/node --max-old-space-size=2048 dist/index.js
 User=mempool
